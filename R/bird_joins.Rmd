@@ -9,3 +9,65 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+```{r}
+#read in the data
+bird_observations <- read_csv(here::here("data", "knb-lter-cap.256.9", "52_pp52_birds_1.csv"))
+sites <- read_csv(here::here("data", "knb-lter-cap.256.9", "52_pp52_sites_1.csv"))
+surveys <- read_csv(here::here("data", "knb-lter-cap.256.9", "52_pp52_surveys_1.csv"))
+taxalist <- read_csv(here::here("data", "knb-lter-cap.256.9", "52_pp52_taxalist_1.csv"))
+```
+```{r}
+#filter by BHCO and RWBL
+
+birds_subset <- bird_observations |> 
+  filter(species_id %in% c("BHCO", "RWBL"), 
+         site_id %in% c("LI-W", "NU-C"))
+```
+```{r}
+birds_left <- left_join(birds_subset, taxalist, by = "species_id") |> 
+  left_join(sites, by = "site_id")
+```
+
+```{r}
+birds_full <- full_join(birds_subset, sites, by = "site_id")
+```
+
+```{r}
+birds_inner <- inner_join(birds_subset, taxalist, by = "species_id")
+```
+
+## Task 2
+
+```{r}
+bird_observations <- bird_observations |> 
+  rename(bird_obs_notes = notes) 
+  
+bird_all_obs <- bird_observations |> 
+  left_join(taxalist, by = "species_id") |> 
+  left_join(sites, by = "site_id") |> 
+  left_join(surveys, by = c("site_id", "survey_id")) |> 
+  select(survey_date, common_name, park_name, bird_count) |> 
+  mutate(date = 
+
+
+```
+
+```{r}
+bird_all_obs_month <- bird_all_obs |> 
+  mutate(month = month(survey_date)) |> 
+  mutate(month = as.factor(month)) |> 
+  relocate(survey_date, .after = month)
+```
+
+```{r}
+total_num_birds <- bird_all_obs_month |> 
+  group_by(park_name, month) |> 
+  summarize(sum(bird_count)) |> 
+  filter(park_name %in% c("Lindo", "Orme", "Palomino", "Sonrisa"))
+```
+
